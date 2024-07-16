@@ -8,7 +8,7 @@ connectDb()
 
 app.use(express.json())
 
-app.use('/',ProductRoutes)
+app.use('/api/products',ProductRoutes)
 
 
 app.listen(port,()=>{
