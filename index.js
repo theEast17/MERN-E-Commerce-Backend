@@ -5,6 +5,7 @@ import BrandRoutes from './Routes/BrandRoutes.js'
 import CategoryRoutes from './Routes/CategoryRoutes.js'
 import cors from 'cors'
 import UserRoutes from './Routes/UserRoutes.js'
+import CartRoutes from './Routes/CartRoutes.js'
 
 const app = express()
 const port = 5000
@@ -20,6 +21,7 @@ app.use('/products', ProductRoutes)
 app.use('/brands', BrandRoutes)
 app.use('/categories', CategoryRoutes)
 app.use('/users', UserRoutes)
+app.use('/cart', CartRoutes)
 
 
 app.listen(port, () => {
