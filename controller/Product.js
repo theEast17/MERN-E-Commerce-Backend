@@ -78,3 +78,14 @@ export const fetchProductById = async (req, res) => {
     }
 }
 
+export const fetchProductByIdAndUpdate = async (req, res) => {
+    const { id } = req.params
+    const updatedData = req.body
+    try {
+        const Product = await ProductSchema.findByIdAndUpdate(id, updatedData, { new: true })
+        res.status(200).json(Product);
+    } catch (err) {
+        res.status(400).json(err);
+    }
+}
+
