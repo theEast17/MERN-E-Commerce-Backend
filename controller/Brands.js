@@ -8,3 +8,14 @@ export const fethcAllBrands=async(req,res)=>{
         res.status(500).json({ error: error.message })
     }
 }
+
+export const createBrands=async(req,res)=>{
+    const data=req.body
+    try {
+        const newBrand = await BrandSchema(data)
+        const response = await newBrand.save()
+        res.status(201).json({ response })
+    } catch (error) {
+        res.status(500).json({ error: error.message })
+    }
+}

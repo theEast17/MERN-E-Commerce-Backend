@@ -38,7 +38,7 @@ export const fetchAllProduct = async (req, res) => {
     if (req.query._sort && req.query._order) {
         // The square brackets are used in this context to dynamically set the property name of an object.
         // This is a feature called computed property names in JavaScript, which allows you to use an expression to determine the property name.
-      
+
         // Dynamic Property Names:
 
         // When you write { [req.query._sort]: req.query._order }, it dynamically creates an object where the key is the value of req.query._sort and the value is the value of req.query._order.
@@ -46,7 +46,7 @@ export const fetchAllProduct = async (req, res) => {
         // Without Computed Property Names:
 
         // If you were to write it without the square brackets, like { req.query._sort: req.query._order }, JavaScript would interpret req.query._sort as a literal string key, which is not what you want.
-        
+
         query = query.sort({ [req.query._sort]: req.query._order });
     }
 
@@ -66,3 +66,15 @@ export const fetchAllProduct = async (req, res) => {
         res.status(400).json(err);
     }
 };
+
+
+export const fetchProductById = async (req, res) => {
+    const { id } = req.params
+    try {
+        const Product = await ProductSchema.findById(id)
+        res.status(200).json(Product);
+    } catch (err) {
+        res.status(400).json(err);
+    }
+}
+
