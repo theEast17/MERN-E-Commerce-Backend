@@ -43,6 +43,6 @@ OrderModel.set('toJSON', {
 })
 
 
-const OrderSchema = mongoose.model('Cart', OrderModel)
+const OrderSchema = mongoose.model('Order', OrderModel)
 
 export default OrderSchema

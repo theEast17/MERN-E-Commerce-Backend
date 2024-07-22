@@ -10,7 +10,7 @@ export const createUser = async (req, res) => {
         }
         const newUser = await UserSchema(data)
         const response = await newUser.save()
-        res.status(201).json({ response })
+        res.status(201).json(response)
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -37,8 +37,8 @@ export const loginUser = async (req, res) => {
 export const fetchUserbyId = async (req, res) => {
     const { id } = req.params
     try {
-        const User = await UserSchema.findById(id, 'name email id')
-        res.status(200).json({ User })
+        const User = await UserSchema.findById(id)
+        res.status(200).json(User)
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -47,7 +47,7 @@ export const fetchUserbyId = async (req, res) => {
 export const fetchAllUsers = async (req, res) => {
     try {
         const User = await UserSchema.find({})
-        res.status(200).json({ User })
+        res.status(200).json(User)
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
