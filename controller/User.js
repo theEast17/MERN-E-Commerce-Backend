@@ -1,4 +1,9 @@
 import UserSchema from "../model/UserModel.js"
+import crypto from 'crypto'
+import jwt from 'jsonwebtoken'
+
+
+const SECRET_KEY = 'secret'
 
 export const createUser = async (req, res) => {
     const data = req.body
@@ -6,32 +11,33 @@ export const createUser = async (req, res) => {
     try {
         const existingUser = await UserSchema.findOne({ email });
         if (existingUser) {
-            return res.status(409).json({ error: 'User already exists' });
+            return res.status(401).json({ error: 'User already exists' });
         }
-        const newUser = await UserSchema(data)
-        const response = await newUser.save()
-        res.status(201).json(response)
+        const salt = crypto.randomBytes(16);
+        crypto.pbkdf2(req.body.password, salt, 310000, 32, 'sha256', async function (err, hashedPassword) {
+            const newUser = await UserSchema({ ...data, password: hashedPassword, salt })
+            const response = await newUser.save()
+            req.login(response, (err) => {
+                if (err) {
+                    res.status(400).json(err)
+                } else {
+                    const token = jwt.sign({ id: response.id , email:response.email }, SECRET_KEY)
+                    res.status(201).json(token)
+                }
+            })
+        })
+
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
 }
 
 export const loginUser = async (req, res) => {
-    const { email, password } = req.body
-    try {
-        const User = await UserSchema.findOne({ email });
-        if (!User) {
-            return res.status(401).json({ error: 'User Not Exists' });
-        }
-        if (User.password === password) {
-            res.status(200).json({ id: User.id, email: User.email, role: User.role, addresses: User.addresses })
-        } else {
-            return res.status(401).json({ error: 'Invalid email or password' });
-        }
+    res.json(req.user)
+}
 
-    } catch (error) {
-        res.status(500).json({ error: error.message })
-    }
+export const checkUser = async (req, res) => {
+    res.json(req.user)
 }
 
 export const fetchUserbyId = async (req, res) => {

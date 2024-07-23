@@ -7,7 +7,7 @@ const UserModel = new mongoose.Schema({
         unique:true
     },
     password: {
-        type: String,
+        type: Buffer,
         required: true
     },
     role: {
@@ -22,7 +22,8 @@ const UserModel = new mongoose.Schema({
     },
     orders:{
         type:[mongoose.Schema.Types.Mixed]
-    }
+    },
+    salt:Buffer
 }, {
     timestamps: true
 })

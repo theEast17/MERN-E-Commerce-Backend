@@ -1,53 +1,11 @@
-/* eslint-disable no-undef */
-import express from 'express'
-import connectDb from './db.js'
-import ProductRoutes from './Routes/ProductRoutes.js'
-import BrandRoutes from './Routes/BrandRoutes.js'
-import CategoryRoutes from './Routes/CategoryRoutes.js'
-import cors from 'cors'
-import UserRoutes from './Routes/UserRoutes.js'
-import CartRoutes from './Routes/CartRoutes.js'
-import OrderRoutes from './Routes/OrderRoutes.js'
-import session from 'express-session'
-import { isAuth, sanitizeUser } from './middleware/isAuth.js'
-import passport from 'passport'
+import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-import UserSchema from './model/UserModel.js'
+import UserSchema from '../model/UserModel';
+import { sanitizeUser } from './isAuth';
 
-
-
-const app = express()
-const port = 5000
-connectDb()
-
-app.use(express.json())
-app.use(cors(
-    {
-        exposedHeaders: ['X-Total-Count']
-    }
-))
-
-
-app.use(session({
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: false,
-}))
-
-// app.use(passport.initialize());
-app.use(passport.authenticate('session'))
-
-
-
-app.use('/products', isAuth(), ProductRoutes)
-app.use('/brands', isAuth(), BrandRoutes)
-app.use('/categories', isAuth(), CategoryRoutes)
-app.use('/users', UserRoutes)
-app.use('/cart', isAuth(), CartRoutes)
-app.use('/orders', isAuth(), OrderRoutes)
 
 
 const SECRET_KEY = 'secret'
@@ -95,8 +53,9 @@ passport.use('jwt', new JwtStrategy({
 }));
 
 
-// this creates session variable req.user on being called from callbacks
+
 passport.serializeUser(function (user, cb) {
+    // eslint-disable-next-line no-undef
     process.nextTick(function () {
         return cb(null,{ id: user.id, role: user.role });
     });
@@ -105,13 +64,11 @@ passport.serializeUser(function (user, cb) {
 // this changes session variable req.user when called from authorized request
 
 passport.deserializeUser(function (User, cb) {
+    // eslint-disable-next-line no-undef
     process.nextTick(function () {
         return cb(null, User);
     });
 });
 
 
-
-app.listen(port, () => {
-    console.log('server started ' + port)
-})
+export default passport;
