@@ -1,9 +1,9 @@
 import CartSchema from "../model/CartModel.js"
 
 export const fetchCartByUser = async (req, res) => {
-    const { user } = req.query
+    const { id } = req.user
     try {
-        const cartItem = await CartSchema.find({ user }).populate('product')
+        const cartItem = await CartSchema.find({ user: id }).populate('product')
         res.status(200).json(cartItem)
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -11,9 +11,10 @@ export const fetchCartByUser = async (req, res) => {
 }
 
 export const addToCart = async (req, res) => {
+    const { id } = req.user
     const data = req.body
     try {
-        const cartItem = await CartSchema(data)
+        const cartItem = await CartSchema({ ...data, user: id })
         const response = await cartItem.save()
         const result = await response.populate('product')
         res.status(201).json(result)

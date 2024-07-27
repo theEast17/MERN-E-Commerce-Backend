@@ -1,9 +1,9 @@
 import OrderSchema from "../model/OrderModel.js"
 
 export const fetchOrderByUser = async (req, res) => {
-    const { userId } = req.params
+    const { id } = req.user
     try {
-        const orders = await OrderSchema.find({ user:userId })
+        const orders = await OrderSchema.find({ user:id })
         res.status(200).json(orders)
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -79,3 +79,5 @@ export const fetchOrderById = async (req, res) => {
         res.status(400).json(err);
     }
 }
+
+// 

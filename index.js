@@ -5,19 +5,18 @@ import ProductRoutes from './Routes/ProductRoutes.js'
 import BrandRoutes from './Routes/BrandRoutes.js'
 import CategoryRoutes from './Routes/CategoryRoutes.js'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import UserRoutes from './Routes/UserRoutes.js'
 import CartRoutes from './Routes/CartRoutes.js'
 import OrderRoutes from './Routes/OrderRoutes.js'
 import session from 'express-session'
-import { isAuth, sanitizeUser } from './middleware/isAuth.js'
+import { cookieExtractor, isAuth, sanitizeUser } from './middleware/isAuth.js'
 import passport from 'passport'
 import { Strategy as LocalStrategy } from 'passport-local';
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken';
-import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
+import { Strategy as JwtStrategy } from 'passport-jwt';
 import UserSchema from './model/UserModel.js'
-
-
 
 const app = express()
 const port = 5000
@@ -30,17 +29,16 @@ app.use(cors(
     }
 ))
 
-
+app.use(express.static('dist'))
 app.use(session({
     secret: 'keyboard cat',
     resave: false,
     saveUninitialized: false,
 }))
 
-// app.use(passport.initialize());
 app.use(passport.authenticate('session'))
 
-
+app.use(cookieParser())
 
 app.use('/products', isAuth(), ProductRoutes)
 app.use('/brands', isAuth(), BrandRoutes)
@@ -67,7 +65,7 @@ passport.use('local', new LocalStrategy({ usernameField: 'email' },
                 async function (err, hashedPassword) {
                     if (crypto.timingSafeEqual(User.password, hashedPassword)) {
                         const token = jwt.sign(sanitizeUser(User), SECRET_KEY)
-                        done(null, token)
+                        done(null, { id: User.id, role: User.role, token })
                     } else {
                         done(null, false, { error: 'Invalid email or password' })
                     }
@@ -79,7 +77,7 @@ passport.use('local', new LocalStrategy({ usernameField: 'email' },
 ));
 
 passport.use('jwt', new JwtStrategy({
-    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    jwtFromRequest: cookieExtractor,
     secretOrKey: SECRET_KEY
 }, async (jwt_payload, done) => {
     try {
@@ -95,14 +93,13 @@ passport.use('jwt', new JwtStrategy({
 }));
 
 
-// this creates session variable req.user on being called from callbacks
 passport.serializeUser(function (user, cb) {
     process.nextTick(function () {
-        return cb(null,{ id: user.id, role: user.role });
+        return cb(null, { id: user.id, role: user.role });
     });
 });
 
-// this changes session variable req.user when called from authorized request
+
 
 passport.deserializeUser(function (User, cb) {
     process.nextTick(function () {

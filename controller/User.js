@@ -6,7 +6,6 @@ import jwt from 'jsonwebtoken'
 const SECRET_KEY = 'secret'
 
 export const createUser = async (req, res) => {
-    const data = req.body
     const { email } = req.body
     try {
         const existingUser = await UserSchema.findOne({ email });
@@ -15,14 +14,17 @@ export const createUser = async (req, res) => {
         }
         const salt = crypto.randomBytes(16);
         crypto.pbkdf2(req.body.password, salt, 310000, 32, 'sha256', async function (err, hashedPassword) {
-            const newUser = await UserSchema({ ...data, password: hashedPassword, salt })
+            const newUser = await UserSchema({ ...req.body, password: hashedPassword, salt })
             const response = await newUser.save()
             req.login(response, (err) => {
                 if (err) {
                     res.status(400).json(err)
                 } else {
-                    const token = jwt.sign({ id: response.id , email:response.email }, SECRET_KEY)
-                    res.status(201).json(token)
+                    const token = jwt.sign({ id: response.id, email: response.email }, SECRET_KEY)
+                    res.cookie('jwt', token, {
+                        expires: new Date(Date.now() + 3600000),
+                        httpOnly: true
+                    }).status(201).json({ id: response.id, email: response.email, role: response.role, addresses: response.addresses })
                 }
             })
         })
@@ -33,18 +35,25 @@ export const createUser = async (req, res) => {
 }
 
 export const loginUser = async (req, res) => {
-    res.json(req.user)
+    res.cookie('jwt', req.user.token, {
+        expires: new Date(Date.now() + 3600000),
+        httpOnly: true
+    }).status(201).json({ id: req.user.id, role: req.user.role })
 }
 
 export const checkUser = async (req, res) => {
-    res.json(req.user)
+    if (req.user) {
+        res.json({ status: 'success', user: req.user });
+    } else {
+        res.status(401).json('User not found!')
+    }
 }
 
 export const fetchUserbyId = async (req, res) => {
-    const { id } = req.params
+    const { id } = req.user
     try {
         const User = await UserSchema.findById(id)
-        res.status(200).json(User)
+        res.status(200).json({ id: User.id, addresses: User.addresses, email: User.email, role: User.role })
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
