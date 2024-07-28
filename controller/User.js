@@ -38,12 +38,12 @@ export const loginUser = async (req, res) => {
     res.cookie('jwt', req.user.token, {
         expires: new Date(Date.now() + 3600000),
         httpOnly: true
-    }).status(201).json({ id: req.user.id, role: req.user.role })
+    }).status(201).json({ id: req.user.id, role: req.user.role, addresses: req.user.addresses})
 }
 
-export const checkUser = async (req, res) => {
+export const checkAuth = async (req, res) => {
     if (req.user) {
-        res.json({ status: 'success', user: req.user });
+        res.json({user:req.user});
     } else {
         res.status(401).json('User not found!')
     }

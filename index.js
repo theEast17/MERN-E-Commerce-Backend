@@ -22,6 +22,7 @@ const app = express()
 const port = 5000
 connectDb()
 
+app.use(express.raw({ type: 'application/json' }))
 app.use(express.json())
 app.use(cors(
     {
@@ -65,7 +66,7 @@ passport.use('local', new LocalStrategy({ usernameField: 'email' },
                 async function (err, hashedPassword) {
                     if (crypto.timingSafeEqual(User.password, hashedPassword)) {
                         const token = jwt.sign(sanitizeUser(User), SECRET_KEY)
-                        done(null, { id: User.id, role: User.role, token })
+                        done(null, { id: User.id, role: User.role, addresses: User.addresses, token })
                     } else {
                         done(null, false, { error: 'Invalid email or password' })
                     }
@@ -107,6 +108,60 @@ passport.deserializeUser(function (User, cb) {
     });
 });
 
+
+
+import Stripe from 'stripe';
+
+const stripe = new Stripe('sk_test_51Ph8WCRrpWOVPdAAdXi8e3iQAXUkWDsOCtIMCXvu0kJSglCkZf0yJoCaV7v7oyM2qAvEPCWPu7ZPQj9tQY6SHR2H00j7jvzOqd');
+
+
+
+app.post("/create-payment-intent", async (req, res) => {
+    const { totalAmount } = req.body;
+
+    // Create a PaymentIntent with the order amount and currency
+    const paymentIntent = await stripe.paymentIntents.create({
+        amount: totalAmount * 100,
+        currency: "inr",
+        // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+        automatic_payment_methods: {
+            enabled: true,
+        },
+    });
+
+    res.send({
+        clientSecret: paymentIntent.client_secret,
+    });
+});
+
+const endpointSecret = "whsec_c993f73140daa20031c60ed817679ef9ef84281405fd2b7b025ce446b3a6dc03";
+
+app.post('/webhook', express.raw({ type: 'application/json' }), (request, response) => {
+    const sig = request.headers['stripe-signature'];
+
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+    } catch (err) {
+        response.status(400).send(`Webhook Error: ${err.message}`);
+        return;
+    }
+
+    // Handle the event
+    switch (event.type) {
+        case 'payment_intent.succeeded':
+            const paymentIntentSucceeded = event.data.object;
+            // Then define and call a function to handle the event payment_intent.succeeded
+            break;
+        // ... handle other event types
+        default:
+            console.log(`Unhandled event type ${event.type}`);
+    }
+
+    // Return a 200 response to acknowledge receipt of the event
+    response.send();
+});
 
 
 app.listen(port, () => {
