@@ -1,4 +1,6 @@
+import { invoiceTemplate, sendMail } from "../middleware/isAuth.js"
 import OrderSchema from "../model/OrderModel.js"
+import UserSchema from "../model/UserModel.js"
 
 export const fetchOrderByUser = async (req, res) => {
     const { id } = req.user
@@ -15,6 +17,8 @@ export const createOrder = async (req, res) => {
     try {
         const order = await OrderSchema(data)
         const response = await order.save()
+        const user=await UserSchema.findById(order.user)
+        sendMail({to:user.email,html:invoiceTemplate(order),subject:'Thanks for your order!'})
         res.status(201).json(response)
     } catch (error) {
         res.status(500).json({ error: error.message })
