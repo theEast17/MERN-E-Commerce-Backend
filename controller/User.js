@@ -94,21 +94,21 @@ export const resetPasswordRequest = async (req, res) => {
             const response = await sendMail({ to: req.body.email, subject, html })
             res.json(response)
         }
-    }else{
+    } else {
         res.json('User not found!')
     }
 
 }
 
 export const resetPassword = async (req, res) => {
-    const {email,token,password}=req.body
+    const { email, token, password } = req.body
 
-    const user = await UserSchema.findOne({ email , resetPasswrodToken:token })
+    const user = await UserSchema.findOne({ email, resetPasswrodToken: token })
     if (user) {
         const salt = crypto.randomBytes(16);
         crypto.pbkdf2(password, salt, 310000, 32, 'sha256', async function (err, hashedPassword) {
-            user.password=hashedPassword
-            user.salt=salt
+            user.password = hashedPassword
+            user.salt = salt
             await user.save()
             const subject = "Reset password successfully for e-commerce"
             const html = `<p>Successfully reset password<p/>`
@@ -116,9 +116,16 @@ export const resetPassword = async (req, res) => {
                 const response = await sendMail({ to: req.body.email, subject, html })
                 res.json(response)
             }
-        }) 
-    }else{
+        })
+    } else {
         res.json('User not found!')
     }
 
+}
+
+export const logoutUser = async (req, res) => {
+    res.cookie('jwt', null, {
+        expires: new Date(Date.now()),
+        httpOnly: true
+    }).status(200).json({ message: 'Logout' })
 }

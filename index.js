@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 /* eslint-disable no-undef */
 import express from 'express'
 import connectDb from './db.js'
@@ -175,9 +176,6 @@ app.post("/create-payment-intent", async (req, res) => {
         clientSecret: paymentIntent.client_secret,
     });
 });
-
-
-
  
 
 app.listen(port, () => {
