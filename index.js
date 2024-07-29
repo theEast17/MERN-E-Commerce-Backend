@@ -21,6 +21,7 @@ import { config as conf } from 'dotenv'
 conf()
 
 
+
 const app = express()
 const port = process.env.PORT
 connectDb()
@@ -177,6 +178,7 @@ app.post("/create-payment-intent", async (req, res) => {
 
 
 
+ 
 
 app.listen(port, () => {
     console.log('server started ' + port)

@@ -1,6 +1,7 @@
 import UserSchema from "../model/UserModel.js"
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
+import { sendMail } from "../middleware/isAuth.js"
 
 
 const SECRET_KEY = 'secret'
@@ -38,12 +39,12 @@ export const loginUser = async (req, res) => {
     res.cookie('jwt', req.user.token, {
         expires: new Date(Date.now() + 3600000),
         httpOnly: true
-    }).status(201).json({ id: req.user.id, role: req.user.role, addresses: req.user.addresses})
+    }).status(201).json({ id: req.user.id, role: req.user.role, addresses: req.user.addresses })
 }
 
 export const checkAuth = async (req, res) => {
     if (req.user) {
-        res.json({user:req.user});
+        res.json({ user: req.user });
     } else {
         res.status(401).json('User not found!')
     }
@@ -77,4 +78,47 @@ export const fetchUserByIdAndUpdate = async (req, res) => {
     } catch (err) {
         res.status(400).json(err);
     }
+}
+
+export const resetPasswordRequest = async (req, res) => {
+    const user = await UserSchema.findOne({ email: req.body.email })
+    if (user) {
+        const token = crypto.randomBytes(48).toString('hex')
+        user.resetPasswrodToken = token
+        await user.save()
+
+        const resetPage = `http://localhost:5173/reset-password?token=${token}&email=${req.body.email}`
+        const subject = "Reset password for e-commerce"
+        const html = `<p>Click here to <a href=${resetPage}>reset password</a> </p>`
+        if (req.body.email) {
+            const response = await sendMail({ to: req.body.email, subject, html })
+            res.json(response)
+        }
+    }else{
+        res.json('User not found!')
+    }
+
+}
+
+export const resetPassword = async (req, res) => {
+    const {email,token,password}=req.body
+
+    const user = await UserSchema.findOne({ email , resetPasswrodToken:token })
+    if (user) {
+        const salt = crypto.randomBytes(16);
+        crypto.pbkdf2(password, salt, 310000, 32, 'sha256', async function (err, hashedPassword) {
+            user.password=hashedPassword
+            user.salt=salt
+            await user.save()
+            const subject = "Reset password successfully for e-commerce"
+            const html = `<p>Successfully reset password<p/>`
+            if (req.body.email) {
+                const response = await sendMail({ to: req.body.email, subject, html })
+                res.json(response)
+            }
+        }) 
+    }else{
+        res.json('User not found!')
+    }
+
 }

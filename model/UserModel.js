@@ -4,7 +4,7 @@ const UserModel = new mongoose.Schema({
     email: {
         type: String,
         required: true,
-        unique:true
+        unique: true
     },
     password: {
         type: Buffer,
@@ -12,18 +12,22 @@ const UserModel = new mongoose.Schema({
     },
     role: {
         type: String,
-        default:'user'
+        default: 'user'
     },
-    addresses:{
-        type:[mongoose.Schema.Types.Mixed]
+    addresses: {
+        type: [mongoose.Schema.Types.Mixed]
     },
-    name:{
-        type:String
+    name: {
+        type: String
     },
-    orders:{
-        type:[mongoose.Schema.Types.Mixed]
+    orders: {
+        type: [mongoose.Schema.Types.Mixed]
     },
-    salt:Buffer
+    salt: Buffer,
+    resetPasswrodToken: {
+        type: String,
+        default: ''
+    }
 }, {
     timestamps: true
 })
