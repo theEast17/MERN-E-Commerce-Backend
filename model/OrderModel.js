@@ -20,6 +20,10 @@ const OrderModel = new mongoose.Schema({
         type: String,
         required: true
     },
+    paymentStatus: {
+        type: String,
+        default: 'pending'
+    },
     status: {
         type: String,
         default: 'pending'

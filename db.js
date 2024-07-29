@@ -1,5 +1,9 @@
+/* eslint-disable no-undef */
 import mongoose from "mongoose";
-const mongoUrl='mongodb://127.0.0.1:27017/ecomstore'
+import {config as conf} from 'dotenv'
+conf()
+
+const mongoUrl= process.env.DATABASE_URL
 
 const connectDb=async()=>{
     try {

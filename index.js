@@ -17,12 +17,48 @@ import crypto from 'crypto'
 import jwt from 'jsonwebtoken';
 import { Strategy as JwtStrategy } from 'passport-jwt';
 import UserSchema from './model/UserModel.js'
+import { config as conf } from 'dotenv'
+conf()
+
 
 const app = express()
-const port = 5000
+const port = process.env.PORT
 connectDb()
 
-app.use(express.raw({ type: 'application/json' }))
+
+const endpointSecret = process.env.ENDPOINT_SECRET;
+
+app.post('/webhook', express.raw({ type: 'application/json' }),async (request, response) => {
+    const sig = request.headers['stripe-signature'];
+
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+    } catch (err) {
+        response.status(400).send(`Webhook Error: ${err.message}`);
+        return;
+    }
+
+    // Handle the event
+    switch (event.type) {
+        case 'payment_intent.succeeded':
+            const paymentIntentSucceeded = event.data.object;
+          
+            const order=await OrderSchema.findById(paymentIntentSucceeded.metadata.orderId);
+
+            order.paymentStatus='recieved';
+            await order.save() 
+            break;
+        // ... handle other event types
+        default:
+            console.log(`Unhandled event type ${event.type}`);
+    }
+
+    // Return a 200 response to acknowledge receipt of the event
+    response.send();
+});
+
 app.use(express.json())
 app.use(cors(
     {
@@ -32,7 +68,7 @@ app.use(cors(
 
 app.use(express.static('dist'))
 app.use(session({
-    secret: 'keyboard cat',
+    secret: process.env.SESSION_SECRET_KEY,
     resave: false,
     saveUninitialized: false,
 }))
@@ -49,7 +85,8 @@ app.use('/cart', isAuth(), CartRoutes)
 app.use('/orders', isAuth(), OrderRoutes)
 
 
-const SECRET_KEY = 'secret'
+const SECRET_KEY = process.env.SECRET_KEY1
+
 passport.use('local', new LocalStrategy({ usernameField: 'email' },
     async (email, password, done) => {
         try {
@@ -111,13 +148,14 @@ passport.deserializeUser(function (User, cb) {
 
 
 import Stripe from 'stripe';
+import OrderSchema from './model/OrderModel.js'
 
-const stripe = new Stripe('sk_test_51Ph8WCRrpWOVPdAAdXi8e3iQAXUkWDsOCtIMCXvu0kJSglCkZf0yJoCaV7v7oyM2qAvEPCWPu7ZPQj9tQY6SHR2H00j7jvzOqd');
+const stripe = new Stripe(process.env.STRIPE_SECRET);
 
 
 
 app.post("/create-payment-intent", async (req, res) => {
-    const { totalAmount } = req.body;
+    const { totalAmount, orderId } = req.body;
 
     // Create a PaymentIntent with the order amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
@@ -127,6 +165,9 @@ app.post("/create-payment-intent", async (req, res) => {
         automatic_payment_methods: {
             enabled: true,
         },
+        metadata: {
+            orderId
+        }
     });
 
     res.send({
@@ -134,34 +175,7 @@ app.post("/create-payment-intent", async (req, res) => {
     });
 });
 
-const endpointSecret = "whsec_c993f73140daa20031c60ed817679ef9ef84281405fd2b7b025ce446b3a6dc03";
 
-app.post('/webhook', express.raw({ type: 'application/json' }), (request, response) => {
-    const sig = request.headers['stripe-signature'];
-
-    let event;
-
-    try {
-        event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
-    } catch (err) {
-        response.status(400).send(`Webhook Error: ${err.message}`);
-        return;
-    }
-
-    // Handle the event
-    switch (event.type) {
-        case 'payment_intent.succeeded':
-            const paymentIntentSucceeded = event.data.object;
-            // Then define and call a function to handle the event payment_intent.succeeded
-            break;
-        // ... handle other event types
-        default:
-            console.log(`Unhandled event type ${event.type}`);
-    }
-
-    // Return a 200 response to acknowledge receipt of the event
-    response.send();
-});
 
 
 app.listen(port, () => {

@@ -1,7 +1,6 @@
 import passport from "passport";
 
 
-
 // eslint-disable-next-line no-unused-vars
 export const isAuth = (req, res, done) => {
   return passport.authenticate('jwt')
