@@ -1,11 +1,12 @@
 import { invoiceTemplate, sendMail } from "../middleware/isAuth.js"
 import OrderSchema from "../model/OrderModel.js"
+import ProductSchema from "../model/ProductModel.js"
 import UserSchema from "../model/UserModel.js"
 
 export const fetchOrderByUser = async (req, res) => {
     const { id } = req.user
     try {
-        const orders = await OrderSchema.find({ user:id })
+        const orders = await OrderSchema.find({ user: id })
         res.status(200).json(orders)
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -16,9 +17,12 @@ export const createOrder = async (req, res) => {
     const data = req.body
     try {
         const order = await OrderSchema(data)
+        for (let item of order.items) {
+            await ProductSchema.findByIdAndUpdate(item.product.id, { $inc: { stock: item.quantity * -1 }})
+        }
         const response = await order.save()
-        const user=await UserSchema.findById(order.user)
-        sendMail({to:user.email,html:invoiceTemplate(order),subject:'Thanks for your order!'})
+        const user = await UserSchema.findById(order.user)
+        sendMail({ to: user.email, html: invoiceTemplate(order), subject: 'Thanks for your order!' })
         res.status(201).json(response)
     } catch (error) {
         res.status(500).json({ error: error.message })
