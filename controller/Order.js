@@ -52,8 +52,8 @@ export const deleteOrder = async (req, res) => {
 
 export const fetchAllOrder = async (req, res) => {
 
-    let query = OrderSchema.find({});   //all the Orders 
-    let totalOrdersQuery = OrderSchema.find({});  // all the Orders
+    let query = OrderSchema.find({});   
+    let totalOrdersQuery = OrderSchema.find({});  
 
 
     if (req.query._sort && req.query._order) {

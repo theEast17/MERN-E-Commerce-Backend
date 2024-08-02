@@ -13,8 +13,8 @@ export const createProduct = async (req, res) => {
 
 export const fetchAllProduct = async (req, res) => {
 
-    let query = ProductSchema.find({});   //all the products 
-    let totalProductsQuery = ProductSchema.find({});  // all the products
+    let query = ProductSchema.find({});   
+    let totalProductsQuery = ProductSchema.find({});  
 
 
     if (req.query.category) {

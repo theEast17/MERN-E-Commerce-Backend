@@ -11,6 +11,7 @@ import UserRoutes from './Routes/UserRoutes.js'
 import CartRoutes from './Routes/CartRoutes.js'
 import OrderRoutes from './Routes/OrderRoutes.js'
 import session from 'express-session'
+import OrderSchema from './model/OrderModel.js'
 import { cookieExtractor, isAuth, sanitizeUser } from './middleware/isAuth.js'
 import passport from 'passport'
 import { Strategy as LocalStrategy } from 'passport-local';
@@ -30,11 +31,9 @@ connectDb()
 
 const endpointSecret = process.env.ENDPOINT_SECRET;
 
-app.post('/webhook', express.raw({ type: 'application/json' }),async (request, response) => {
+app.post('/webhook', express.raw({ type: 'application/json' }), async (request, response) => {
     const sig = request.headers['stripe-signature'];
-
     let event;
-
     try {
         event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
     } catch (err) {
@@ -46,11 +45,11 @@ app.post('/webhook', express.raw({ type: 'application/json' }),async (request, r
     switch (event.type) {
         case 'payment_intent.succeeded':
             const paymentIntentSucceeded = event.data.object;
-          
-            const order=await OrderSchema.findById(paymentIntentSucceeded.metadata.orderId);
 
-            order.paymentStatus='recieved';
-            await order.save() 
+            const order = await OrderSchema.findById(paymentIntentSucceeded.metadata.orderId);
+
+            order.paymentStatus = 'recieved';
+            await order.save()
             break;
         // ... handle other event types
         default:
@@ -135,22 +134,19 @@ passport.use('jwt', new JwtStrategy({
 
 passport.serializeUser(function (user, cb) {
     process.nextTick(function () {
-        return cb(null, { id: user.id, role: user.role });
+        return cb(null, { id: user.id, role: user.role, token: user.token });
     });
 });
 
-
-
-passport.deserializeUser(function (User, cb) {
+passport.deserializeUser(function (user, cb) {
     process.nextTick(function () {
-        return cb(null, User);
+        return cb(null, user);
     });
 });
 
 
 
 import Stripe from 'stripe';
-import OrderSchema from './model/OrderModel.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET);
 
@@ -176,7 +172,7 @@ app.post("/create-payment-intent", async (req, res) => {
         clientSecret: paymentIntent.client_secret,
     });
 });
- 
+
 
 app.listen(port, () => {
     console.log('server started ' + port)

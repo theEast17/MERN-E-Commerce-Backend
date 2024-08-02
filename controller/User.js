@@ -2,9 +2,10 @@ import UserSchema from "../model/UserModel.js"
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import { sendMail } from "../middleware/isAuth.js"
+import { config as conf } from 'dotenv'
+conf()
 
-
-const SECRET_KEY = 'secret'
+const SECRET_KEY = process.env.SECRET_KEY1
 
 export const createUser = async (req, res) => {
     const { email } = req.body
@@ -97,7 +98,6 @@ export const resetPasswordRequest = async (req, res) => {
     } else {
         res.json('User not found!')
     }
-
 }
 
 export const resetPassword = async (req, res) => {
@@ -110,7 +110,7 @@ export const resetPassword = async (req, res) => {
             user.password = hashedPassword
             user.salt = salt
             await user.save()
-            const subject = "Reset password successfully for e-commerce"
+            const subject = "Successfully Reset Password  for East-E-commerce"
             const html = `<p>Successfully reset password<p/>`
             if (req.body.email) {
                 const response = await sendMail({ to: req.body.email, subject, html })
@@ -120,7 +120,6 @@ export const resetPassword = async (req, res) => {
     } else {
         res.json('User not found!')
     }
-
 }
 
 export const logoutUser = async (req, res) => {
